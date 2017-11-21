@@ -169,7 +169,15 @@ import UIKit
         }
         set {
             layer.cornerRadius = newValue
-            indicatorView.cornerRadius = newValue - indicatorViewInset
+            if indicatorViewInheritsCornerRadius {
+                indicatorView.cornerRadius = newValue - indicatorViewInset
+                titleLabels.forEach { $0.layer.cornerRadius = indicatorView.cornerRadius }
+            }
+        }
+    }
+    @IBInspectable public fileprivate(set) var indicatorViewInheritsCornerRadius: Bool = true {
+        didSet {
+            indicatorView.cornerRadius = indicatorViewInheritsCornerRadius ? layer.cornerRadius - indicatorViewInset : 0
             titleLabels.forEach { $0.layer.cornerRadius = indicatorView.cornerRadius }
         }
     }
