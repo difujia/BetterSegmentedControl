@@ -24,7 +24,7 @@ import UIKit
                 titleMaskView.frame = frame
             }
         }
-        
+
         // MARK: Lifecycle
         init() {
             super.init(frame: CGRect.zero)
@@ -39,7 +39,7 @@ import UIKit
             titleMaskView.backgroundColor = UIColor.black
         }
     }
-    
+
     // MARK: Constants
     fileprivate struct Animation {
         fileprivate static let withBounceDuration: TimeInterval = 0.3
@@ -52,12 +52,12 @@ import UIKit
         fileprivate static let indicatorViewBackground: UIColor = UIColor.black
         fileprivate static let selectedTitle: UIColor = UIColor.white
     }
-    
+
     // MARK: Error handling
     public enum IndexError: Error {
         case indexBeyondBounds(UInt)
     }
-    
+
     // MARK: Properties
     /// The selected index
     public fileprivate(set) var index: UInt
@@ -73,7 +73,7 @@ import UIKit
             }
             let labels: [(UILabel, UILabel)] = newValue.map {
                 (string) -> (UILabel, UILabel) in
-                
+
                 let titleLabel = UILabel()
                 titleLabel.textColor = titleColor
                 titleLabel.text = string
@@ -84,7 +84,7 @@ import UIKit
                 titleLabel.layer.borderColor = titleBorderColor.cgColor
                 titleLabel.layer.cornerRadius = indicatorView.cornerRadius
                 titleLabel.numberOfLines = titleNumberOfLines
-                
+
                 let selectedTitleLabel = UILabel()
                 selectedTitleLabel.textColor = selectedTitleColor
                 selectedTitleLabel.text = string
@@ -92,18 +92,18 @@ import UIKit
                 selectedTitleLabel.textAlignment = .center
                 selectedTitleLabel.font = selectedTitleFont
                 selectedTitleLabel.numberOfLines = titleNumberOfLines
-                
+
                 return (titleLabel, selectedTitleLabel)
             }
-            
+
             titleLabelsView.subviews.forEach({ $0.removeFromSuperview() })
             selectedTitleLabelsView.subviews.forEach({ $0.removeFromSuperview() })
-            
+
             for (inactiveLabel, activeLabel) in labels {
                 titleLabelsView.addSubview(inactiveLabel)
                 selectedTitleLabelsView.addSubview(activeLabel)
             }
-            
+
             setNeedsLayout()
         }
     }
@@ -153,7 +153,7 @@ import UIKit
             }
         }
     }
-    
+
     /// Whether the indicator should bounce when selecting a new index. Defaults to true
     @IBInspectable public fileprivate(set) var bouncesOnChange: Bool = true
     /// Whether the the control should always send the .ValueChanged event, regardless of the index remaining unchanged after interaction. Defaults to false
@@ -258,7 +258,7 @@ import UIKit
             titleLabels.forEach { $0.layer.borderColor = titleBorderColor.cgColor }
         }
     }
-    
+
     // MARK: - Private properties
     fileprivate let titleLabelsView = UIView()
     fileprivate let selectedTitleLabelsView = UIView()
@@ -267,7 +267,7 @@ import UIKit
 
     fileprivate var tapGestureRecognizer: UITapGestureRecognizer!
     fileprivate var panGestureRecognizer: UIPanGestureRecognizer!
-    
+
     fileprivate var width: CGFloat { return bounds.width }
     fileprivate var height: CGFloat { return bounds.height }
     fileprivate var titleLabelsCount: Int { return titleLabelsView.subviews.count }
@@ -275,7 +275,7 @@ import UIKit
     fileprivate var selectedTitleLabels: [UILabel] { return selectedTitleLabelsView.subviews as! [UILabel] }
     fileprivate var totalInsetSize: CGFloat { return indicatorViewInset * 2.0 }
     fileprivate lazy var defaultTitles: [String] = { return ["First", "Second"] }()
-    
+
     // MARK: Lifecycle
     required public init?(coder aDecoder: NSCoder) {
         self.index = 0
@@ -316,15 +316,15 @@ import UIKit
     }
     fileprivate func finishInit() {
         layer.masksToBounds = true
-        
+
         addSubview(titleLabelsView)
         addSubview(indicatorView)
         addSubview(selectedTitleLabelsView)
         selectedTitleLabelsView.layer.mask = indicatorView.titleMaskView.layer
-        
+
         tapGestureRecognizer = UITapGestureRecognizer(target: self, action: #selector(BetterSegmentedControl.tapped(_:)))
         addGestureRecognizer(tapGestureRecognizer)
-        
+
         panGestureRecognizer = UIPanGestureRecognizer(target: self, action: #selector(BetterSegmentedControl.panned(_:)))
         panGestureRecognizer.delegate = self
         addGestureRecognizer(panGestureRecognizer)
@@ -334,50 +334,54 @@ import UIKit
         guard titleLabelsCount > 1 else {
             return
         }
-        
+
         titleLabelsView.frame = bounds
         selectedTitleLabelsView.frame = bounds
-        
+
         indicatorView.frame = elementFrame(forIndex: index)
-        
+
         for index in 0...titleLabelsCount-1 {
             let frame = elementFrame(forIndex: UInt(index))
             titleLabelsView.subviews[index].frame = frame
             selectedTitleLabelsView.subviews[index].frame = frame
         }
     }
-    
+
     // MARK: Index Setting
     /**
      Sets the control's index.
-     
+
      - parameter index:    The new index
      - parameter animated: (Optional) Whether the change should be animated or not. Defaults to true.
-     
+
      - throws: An error of type IndexBeyondBounds(UInt) is thrown if an index beyond the available indices is passed.
      */
     public func setIndex(_ index: UInt, animated: Bool = true) throws {
+        try setIndex(index, animated: animated, canSendEvent: false)
+    }
+
+    private func setIndex(_ index: UInt, animated: Bool = true, canSendEvent: Bool) throws {
         guard titleLabels.indices.contains(Int(index)) else {
             throw IndexError.indexBeyondBounds(index)
         }
         let oldIndex = self.index
         self.index = index
-        moveIndicatorViewToIndex(animated, shouldSendEvent: (self.index != oldIndex || alwaysAnnouncesValue))
+        moveIndicatorViewToIndex(animated, shouldSendEvent: canSendEvent && (self.index != oldIndex || alwaysAnnouncesValue))
     }
 
     // MARK: Indicator View Customization
 
     /**
      Adds the passed view as a subview to the indicator view
-     
+
      - parameter view: The view to be added to the indicator view
-     
+
      - note: The added view must be able to layout & size itself and will not be autoresized.
      */
     public func addSubviewToIndicator(_ view: UIView) {
         indicatorView.addSubview(view)
     }
-    
+
     // MARK: Animations
     fileprivate func moveIndicatorViewToIndex(_ animated: Bool, shouldSendEvent: Bool) {
         if animated {
@@ -402,7 +406,7 @@ import UIKit
             sendActions(for: .valueChanged)
         }
     }
-    
+
     // MARK: Helpers
     fileprivate func elementFrame(forIndex index: UInt) -> CGRect {
         let elementWidth = (width - totalInsetSize) / CGFloat(titleLabelsCount)
@@ -419,17 +423,17 @@ import UIKit
         indicatorView.frame = titleLabels[Int(self.index)].frame
         layoutIfNeeded()
     }
-    
+
     // MARK: Action handlers
     @objc fileprivate func tapped(_ gestureRecognizer: UITapGestureRecognizer!) {
         let location = gestureRecognizer.location(in: self)
-        try! setIndex(nearestIndex(toPoint: location))
+        try! setIndex(nearestIndex(toPoint: location), canSendEvent: true)
     }
     @objc fileprivate func panned(_ gestureRecognizer: UIPanGestureRecognizer!) {
         guard !panningDisabled else {
             return
         }
-        
+
         switch gestureRecognizer.state {
         case .began:
             initialIndicatorViewFrame = indicatorView.frame
@@ -439,7 +443,7 @@ import UIKit
             frame.origin.x = max(min(frame.origin.x, bounds.width - indicatorViewInset - frame.width), indicatorViewInset)
             indicatorView.frame = frame
         case .ended, .failed, .cancelled:
-            try! setIndex(nearestIndex(toPoint: indicatorView.center))
+            try! setIndex(nearestIndex(toPoint: indicatorView.center), canSendEvent: true)
         default: break
         }
     }
